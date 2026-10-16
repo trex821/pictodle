@@ -36,8 +36,8 @@
 *{box-sizing:border-box}
 html,body{min-height:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5}
-#bgc{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block}
-.veil{position:fixed;inset:0;z-index:0;background:radial-gradient(70% 60% at 50% 40%,rgba(6,8,30,.30),rgba(6,8,30,.74) 82%)}
+#bgc{position:fixed;left:0;top:0;width:100vw;height:100vh;height:100lvh;z-index:0;display:block}
+.veil{position:fixed;left:0;top:0;width:100vw;height:100vh;height:100lvh;z-index:0;background:radial-gradient(70% 60% at 50% 40%,rgba(6,8,30,.30),rgba(6,8,30,.74) 82%)}
 .wrap{position:relative;z-index:1;max-width:640px;margin:0 auto;padding-inline:16px;padding-block:20px 48px;display:flex;flex-direction:column;gap:16px}
 header{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .logo{margin:0;font:900 clamp(38px,10vw,58px)/.95 var(--display);letter-spacing:-.02em;color:#fff;text-transform:uppercase;text-shadow:0 3px 0 rgba(0,0,0,.55),0 0 18px rgba(0,0,0,.45)}
@@ -167,7 +167,8 @@ dialog::backdrop{background:rgba(0,0,0,.6)}
 .dist div{display:grid;grid-template-columns:76px 1fr;gap:8px;align-items:center;font:900 12px var(--display);font-style:italic}
 .dist i{display:block;height:20px;border-radius:5px;background:var(--rc);min-width:22px;color:#000;font:800 12px/20px var(--body);font-style:normal;text-align:right;padding-right:6px;font-variant-numeric:tabular-nums}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#fff;color:#000;font:800 14px var(--body);padding:10px 16px;border-radius:10px;z-index:20}
-@media (max-width:520px){.hints{grid-template-columns:repeat(3,minmax(0,1fr))}.history .h{display:none}}
+@media (max-width:520px){.hints{display:flex;flex-wrap:wrap;justify-content:center}.hints .hint{flex:0 0 calc((100% - 16px)/3)}.history .h{display:none}}
+@media (max-width:640px){header{flex-direction:column;align-items:center;text-align:center}.toolbar{justify-content:center}.toolbar .sp{display:none}.toolbar .tbrow{margin-left:0}.toolbar2{justify-content:center;margin-top:0}}
 @media (prefers-reduced-motion:reduce){.hint .in{transition:none}.result h2.pop{animation:none}}
 </style>
 
@@ -478,14 +479,17 @@ th("jddh","Just Dance: Decades of Hits",{veil:0.12,bg:"#f8d81a",h:["#ff4a98","#2
 const THEME_ORDER=["jd1","jd2","jd3","jd4","jd2014","jd2015","jd2016","jd2017","jd2018","jd2019","jd2020","jd2021","jd2022","jd2023","jd2024","jd2025","jd2026","jddh"];
 let theme=TH[store.get("theme","jd2014")]||TH.jd2014;
 const cv=document.getElementById("bgc"),cx=cv.getContext("2d");
-function paintBg(){const dpr=Math.min(devicePixelRatio||1,2),W=innerWidth,H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;cx.setTransform(dpr,0,0,dpr,0,0);cx.globalAlpha=1;cx.globalCompositeOperation="source-over";theme.paint(cx,W,H,mulberry(7))}
+let bgW=0,bgH=0;
+/* Mobile browsers change the window height as the address bar hides and shows. Paint once for the tallest height so scrolling never stretches or repaints the background. */
+function bgSize(){const W=document.documentElement.clientWidth||innerWidth;const touch=matchMedia("(pointer:coarse)").matches;const H=Math.max(innerHeight,touch&&screen?Math.max(screen.height,screen.width):0);return[W,Math.ceil(H)]}
+function paintBg(){const dpr=Math.min(devicePixelRatio||1,2);const[W,H0]=bgSize();const H=Math.max(H0,W===bgW?bgH:0);bgW=W;bgH=H;cv.style.height=H+"px";cv.width=W*dpr;cv.height=H*dpr;cx.setTransform(dpr,0,0,dpr,0,0);cx.globalAlpha=1;cx.globalCompositeOperation="source-over";theme.paint(cx,W,H,mulberry(7))}
 function applyTheme(t){theme=t;const r=document.documentElement.style;r.setProperty("--bg",t.bg);t.h.forEach((c,i)=>r.setProperty("--h"+(i+1),c));
   r.setProperty("--accent",t.accent);r.setProperty("--accent-ink",t.ink);r.setProperty("--accent-shadow",t.shadow);r.setProperty("--pill",t.pill);r.setProperty("--focus",t.focus);
   document.querySelector(".veil").style.opacity=String(Math.min(t.veil??0.6,0.6));paintBg();store.set("theme",t.id)}
 const sel=document.getElementById("theme");
 sel.innerHTML=THEME_ORDER.map(id=>`<option value="${id}">${TH[id].name}</option>`).join("");
 sel.value=theme.id;sel.onchange=()=>applyTheme(TH[sel.value]);
-applyTheme(theme);let rto;addEventListener("resize",()=>{clearTimeout(rto);rto=setTimeout(paintBg,150)});
+applyTheme(theme);let rto;addEventListener("resize",()=>{const[W,H]=bgSize();if(W===bgW&&H<=bgH)return;clearTimeout(rto);rto=setTimeout(paintBg,150)});
 
 /* ---------- ratings (colors from the Just Dance 2023+ "Basic" scoring effect) ---------- */
 const RATINGS=[{t:"YEAH!",c:"#f5a300"},{t:"PERFECT",c:"#55e000"},{t:"SUPER",c:"#00e8cc"},{t:"GOOD",c:"#00c0f0"},{t:"OK",c:"#f030b0"},{t:"X",c:"#f00000"}];
