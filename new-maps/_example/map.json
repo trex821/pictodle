@@ -1,0 +1,14 @@
+{
+  "title": "Song Title",
+  "artist": "Artist Name",
+  "game": "JD2027",
+  "gameName": "Just Dance 2027",
+  "type": "Classic",
+  "alt": "",
+  "year": 2026,
+  "difficulty": "Medium",
+  "colors": [["Cerise", "#E0249A"]],
+  "coaches": ["Female"],
+  "colorSequence": false,
+  "estimatedColors": false
+}
